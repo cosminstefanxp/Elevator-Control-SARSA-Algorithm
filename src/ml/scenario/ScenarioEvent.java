@@ -13,4 +13,33 @@ public class ScenarioEvent {
 	
 	/** The destination floor of the passenger. */
 	public int stopFloor;
+
+	/**
+	 * Instantiates a new scenario event.
+	 *
+	 * @param time the time
+	 * @param startFloor the start floor
+	 * @param stopFloor the stop floor
+	 */
+	public ScenarioEvent(int time, int startFloor, int stopFloor) {
+		super();
+		this.time = time;
+		this.startFloor = startFloor;
+		this.stopFloor = stopFloor;
+	}
+
+	@Override
+	public String toString() {
+		return "ScenarioEvent [t=" + time + ", " + startFloor
+				+ " -> " + stopFloor + "]";
+	}
+
+	/**
+	 * Instantiates a new scenario event.
+	 */
+	public ScenarioEvent() {
+		super();
+	}
+	
+	
 }
