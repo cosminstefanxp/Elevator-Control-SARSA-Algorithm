@@ -8,11 +8,17 @@ import java.util.Random;
  */
 public class ScenarioGenerator {
 	
+	/** The Constant ELEVATOR_CAPACITY. */
+	public static final int ELEVATOR_CAPACITY=10;
+	
 	/** The Constant MAX_FLOOR. */
-	public static final int MAX_FLOOR=5;
+	public static final int MAX_FLOOR=4;
 	
 	/** The Constant MIN_FLOOR. */
 	public static final int MIN_FLOOR=0;
+	
+	/** The Constant NO_FLOOR. */
+	public static final int NO_FLOOR=MIN_FLOOR-1;
 	
 	/** The Constant FLOOR_COUNT. */
 	public static final int FLOOR_COUNT=MAX_FLOOR-MIN_FLOOR+1;
@@ -112,7 +118,10 @@ public class ScenarioGenerator {
 	 * Generates {@count} {@link ScenarioEvent}s that are basically no-trending, up-trending or down-trending:<br/>
 	 * <ul>
 	 * <li>up-trending (in the part of the day when people are going up): The event will mostly be: going upwards,
-	 * starting from the ground floor.</li>
+	 * starting from the groScenarioGenerator.FLOOR_COUNT*
+			Math.pow(2, ScenarioGenerator.FLOOR_COUNT)*
+			Math.pow(ScenarioGenerator.FLOOR_COUNT, ScenarioGenerator.ELEVATOR_CAPACITY)*
+			Math.pow(ScenarioGenerator.FLOOR_COUNT, ScenarioGenerator.ELEVATOR_CAPACITY));und floor.</li>
 	 * <li>down-trending (in the part of the day when people are going down): The event will mostly be: going downwards,
 	 * stopping at the ground floor.</li>
 	 * </ul>
@@ -166,21 +175,5 @@ public class ScenarioGenerator {
 		return events;
 	}
 	
-	/**
-	 * The main method.
-	 *
-	 * @param args the arguments
-	 */
-	public static void main(String[] args)
-	{
-		
-		ScenarioGenerator sg=new ScenarioGenerator();
-		ArrayList<ScenarioEvent> events=sg.generateScenarioDay(0);
-		System.out.println(events.size()+" events.");
-		for(ScenarioEvent event:events)
-			System.out.println(event);
-		
-		
-	}
 
 }
