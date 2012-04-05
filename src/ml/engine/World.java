@@ -1,7 +1,6 @@
 package ml.engine;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -9,7 +8,6 @@ import java.util.LinkedList;
 import ml.scenario.ScenarioEvent;
 import ml.scenario.ScenarioGenerator;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -70,7 +68,7 @@ public class World {
 		
 		//Init the scenario & events
 		sg=new ScenarioGenerator();
-		time=0;
+		time=-1;
 		
 		peopleInE1=new LinkedList<ScenarioEvent>();
 		peopleInE2=new LinkedList<ScenarioEvent>();
@@ -81,6 +79,8 @@ public class World {
 		events=sg.generateScenarioDay(0);
 		Collections.sort(events);
 		currentEventIndex=0;
+		previousAction=Action.NO_ACTION;
+		prevPreviousAction=Action.NO_ACTION;
 		
 		//Logging
 		log.info("Generated scenario with "+events.size()+" events.");
@@ -97,7 +97,7 @@ public class World {
 	 */
 	private State generateStartState() {
 		State state=new State();
-		state.timeInterval=0;		
+		state.timeInterval=0;
 		return state;
 	}
 	
@@ -110,17 +110,22 @@ public class World {
 	 */
 	public State getNextState(State currentState, int action)
 	{
+		State state=new State();
+		
+		//Update people waiting
+		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
+		{
+			state.waiting[i][State.UP]=currentState.waiting[i][State.UP];
+			state.waiting[i][State.DOWN]=currentState.waiting[i][State.DOWN];
+		}
+
 		//Update the world data
 		time++;
-		injectEventsInWorld();
-		
-		
-		
-		State state=new State();
+		injectEventsInWorld(state);
 		
 		//Time interval
 		state.timeInterval=(byte) (time/60/2);
-		
+
 		//Next elevator positions
 		switch(Action.getE1Action(action))
 		{
@@ -135,20 +140,24 @@ public class World {
 		case Action.E2_DOWN: 	state.elevator2Floor=(byte) (currentState.elevator2Floor-1); break;
 		}
 		
-		//Destinations
-		for(int i=0;i<3;i++)
-		{
-			state.destinationsE1[i]=currentState.destinationsE1[i];
-			state.destinationsE2[i]=currentState.destinationsE2[i];
-		}
-		
-		//If the current action is to stop the elevator or keep it stopped one more stop
-		//Elevator 1
+		/** Update the people waiting, in the elevators and update the destinations in the state
+		 * 
+		 * If the current action is to stop the elevator or keep it stopped one more step, get people in/out of the elevator
+		 * and update everything.
+		 * 
+		 * If the current action is to move, just update the destinations for the people inside
+		 */
+		/* Case 1 - Elevator is stopped - Elevator 1 */
 		if(Action.getE1Action(action)==Action.E1_STOP)
-			//If the elevator just stopped, the people inside should get out 
-			if(Action.getE1Action(previousAction)!=Action.E1_STOP)
+			
+			/* CASE 1.1
+			 * If the elevator just stopped, the people inside should get out 
+			 */
+			if(Action.getE1Action(previousAction)==Action.E1_DOWN || 
+					Action.getE1Action(previousAction)==Action.E1_UP)
 			{
 				Iterator<ScenarioEvent> it=peopleInE1.iterator();
+				// See which passengers should go out and also update the destinations
 				while(it.hasNext())
 				{
 					ScenarioEvent ev=it.next();
@@ -158,15 +167,30 @@ public class World {
 						log.debug("Passenger from E1 reached destination: "+ev);
 						//Remove from elevator
 						it.remove();
-						state.destinationsE1[ev.stopFloor]=false;
 					}
+					else
+						//Going up
+						if(ev.startFloor>ev.stopFloor)
+							state.destinationsE1[State.ABOVE]=true;
+						//Going down
+						else 
+							state.destinationsE1[State.BELOW]=true;							
 				}
 			}
-			//If the elevator stopped the previous step, the people outside should get in 
+			
+		
+			/* CASE 1.2
+			 * If the elevator stopped the previous step (was already stopped), the people outside should get in 
+			 */
 			else
 			{
 				Iterator<ScenarioEvent> it=peopleWaiting.get(state.elevator1Floor).iterator();
 				boolean moreWaiting=false;
+				
+				//Update destinations for people who are in the elevator
+				updateDestinations(state.destinationsE1, peopleInE1);
+				
+				//See which passengers want to use the elevator and also update the destinations for people going in 
 				while(it.hasNext())
 				{
 					ScenarioEvent ev=it.next();
@@ -185,22 +209,43 @@ public class World {
 						it.remove();
 						//Add in elevator
 						peopleInE1.add(ev);
-						state.destinationsE1[ev.stopFloor]=true;
+						//Update destinations
+						if(ev.startFloor>ev.stopFloor)
+							state.destinationsE1[State.BELOW]=true;
+						else
+							state.destinationsE1[State.ABOVE]=true;
 					}
 				}
 				//Mark if no more people are waiting on this floor to go in the same direction as the elevator
 				if(!moreWaiting)
 					if(Action.getE1Action(prevPreviousAction)==Action.E1_UP)
 						state.waiting[state.elevator1Floor][State.UP]=false;
-					else
+					else if(Action.getE1Action(prevPreviousAction)==Action.E1_DOWN)
 						state.waiting[state.elevator1Floor][State.DOWN]=false;
+					else
+					{
+						state.waiting[state.elevator1Floor][State.DOWN]=false;
+						state.waiting[state.elevator1Floor][State.UP]=false;
+					}
 			}
-		//Elevator 2
+		/* CASE 2 - Elevator is moving - Elevator 1*/
+		else
+		{
+			updateDestinations(state.destinationsE1, peopleInE1);
+		}
+		
+		
+		/* Case 1 - Elevator is stopped - Elevator 2 */
 		if(Action.getE2Action(action)==Action.E2_STOP)
-			//If the elevator just stopped, the people inside should get out 
-			if(Action.getE2Action(previousAction)!=Action.E2_STOP)
+
+			/* CASE 1.1
+			 * If the elevator just stopped, the people inside should get out 
+			 */
+			if(Action.getE1Action(previousAction)==Action.E2_DOWN || 
+				Action.getE2Action(previousAction)==Action.E2_UP)
 			{
 				Iterator<ScenarioEvent> it=peopleInE2.iterator();
+				// See which passengers should go up and also update the destinations
 				while(it.hasNext())
 				{
 					ScenarioEvent ev=it.next();
@@ -210,20 +255,33 @@ public class World {
 						log.debug("Passenger from E2 reached destination: "+ev);
 						//Remove from elevator
 						it.remove();
-						state.destinationsE2[ev.stopFloor]=false;
 					}
+					else
+						//Going up
+						if(ev.startFloor>ev.stopFloor)
+							state.destinationsE2[State.ABOVE]=true;
+						//Going down
+						else 
+							state.destinationsE2[State.BELOW]=true;							
 				}
 			}
-			//If the elevator stopped the previous step, the people outside should get in 
+		
+			/* CASE 1.2
+			 * If the elevator stopped the previous step (was already stopped), the people outside should get in 
+			 */
 			else
 			{
 				Iterator<ScenarioEvent> it=peopleWaiting.get(state.elevator2Floor).iterator();
 				boolean moreWaiting=false;
+				//Update destinations for people who are in the elevator
+				updateDestinations(state.destinationsE2, peopleInE2);
+				
+				//See which passengers want to use the elevator and also update the destinations for people going in 
 				while(it.hasNext())
 				{
 					ScenarioEvent ev=it.next();
 					//If the passenger wants to go in the same direction as the elevator was going, hop in
-					if(personShouldGoIn(Action.getE2Action(prevPreviousAction), ev))
+					if(personShouldGoIn(Action.getE1Action(prevPreviousAction), ev))
 					{
 						//Check if the elevator is full
 						if(peopleInE2.size()>=ScenarioGenerator.ELEVATOR_CAPACITY)
@@ -237,34 +295,78 @@ public class World {
 						it.remove();
 						//Add in elevator
 						peopleInE2.add(ev);
-						state.destinationsE2[ev.stopFloor]=true;
+						//Update destinations
+						if(ev.startFloor>ev.stopFloor)
+							state.destinationsE2[State.BELOW]=true;
+						else
+							state.destinationsE2[State.ABOVE]=true;
 					}
 				}
 				//Mark if no more people are waiting on this floor to go in the same direction as the elevator
 				if(!moreWaiting)
 					if(Action.getE2Action(prevPreviousAction)==Action.E2_UP)
-						state.waiting[state.elevator1Floor][State.UP]=false;
+						state.waiting[state.elevator2Floor][State.UP]=false;
+					else if(Action.getE2Action(prevPreviousAction)==Action.E2_DOWN)
+						state.waiting[state.elevator2Floor][State.DOWN]=false;
 					else
-						state.waiting[state.elevator1Floor][State.DOWN]=false;
+					{
+						state.waiting[state.elevator2Floor][State.DOWN]=false;
+						state.waiting[state.elevator2Floor][State.UP]=false;
+					}
 			}
-		
-		
-				
+		/* CASE 2 - Elevator is moving - Elevator 2*/
+		else
+		{
+			updateDestinations(state.destinationsE2, peopleInE2);
+		}
+			
+		//Update actions
+		prevPreviousAction=previousAction;
+		previousAction=action;				
 				
 		
 		return state;
 	}
 	
 	/**
-	 * Injects the events corresponding to the current {@value time} in the world.
+	 * Update destinations array for the people in the elevator.
+	 *
+	 * @param destinationsE the destinations for elevator
+	 * @param peopleInE the people in elevator
 	 */
-	private void injectEventsInWorld()
+	private void updateDestinations(boolean[] destinationsE,
+			LinkedList<ScenarioEvent> peopleInE) {
+		
+		destinationsE[State.ABOVE]=destinationsE[State.BELOW]=destinationsE[State.CURRENT]=false;
+		
+		for(ScenarioEvent ev: peopleInE)
+			if(ev.startFloor>ev.stopFloor)
+				destinationsE[State.BELOW]=true;
+			else if(ev.startFloor<ev.stopFloor)
+				destinationsE[State.ABOVE]=true;
+			else
+				destinationsE[State.CURRENT]=true;
+	}
+
+	/**
+	 * Injects the events corresponding to the current {@code time} in the world. Also, updates
+	 * the waiting list in the given {@code state}
+	 *
+	 * @param state the state
+	 */
+	private void injectEventsInWorld(State state)
 	{
 		//While there are more events at the current time, inject them in the system
 		while(events.get(currentEventIndex).time==time)
 		{
 			ScenarioEvent ev=events.get(currentEventIndex);
 			peopleWaiting.get(ev.startFloor).add(ev);
+			//going UP
+			if(ev.stopFloor>ev.startFloor)
+				state.waiting[ev.startFloor][State.UP]=true;
+			//going DOWN
+			else if(ev.startFloor > ev.stopFloor)
+				state.waiting[ev.startFloor][State.DOWN]=true;
 			currentEventIndex++;
 		}
 	}
@@ -279,14 +381,16 @@ public class World {
 	 */
 	private boolean personShouldGoIn(int prevDirection, ScenarioEvent ev)
 	{
-		//Going down
+		//Going down or no action/stopped for long or top floor
 		if(ev.stopFloor-ev.startFloor>0)
-			if(prevDirection==Action.NO_ACTION || prevDirection==Action.E1_DOWN || prevDirection==Action.E2_DOWN)
+			if(prevDirection==Action.NO_ACTION || prevDirection==Action.E1_DOWN || prevDirection==Action.E2_DOWN ||
+					prevDirection==Action.E1_STOP || prevDirection==Action.E2_STOP)
 				return true;
 		
 		//Going up
 		if(ev.stopFloor-ev.startFloor<0)
-			if(prevDirection==Action.NO_ACTION || prevDirection==Action.E1_UP || prevDirection==Action.E2_UP)
+			if(prevDirection==Action.NO_ACTION || prevDirection==Action.E1_UP || prevDirection==Action.E2_UP ||
+					prevDirection==Action.E1_STOP || prevDirection==Action.E2_STOP)
 				return true;
 		
 		return true;
@@ -300,9 +404,13 @@ public class World {
 	public static void main(String[] args)
 	{
 		World world = new World();
+		world.events.add(0,new ScenarioEvent(0, 0, 3));
 		State startState=world.generateStartState();
 		Engine engine=new Engine(world,startState);
-		
+		State nextState=world.getNextState(startState, Action.E2_UP+Action.E1_STOP);
+		log.info(nextState);
+		nextState=world.getNextState(nextState, Action.E2_UP+Action.E1_STOP);
+		log.info(nextState);
 	}
 
 
