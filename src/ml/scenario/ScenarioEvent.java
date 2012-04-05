@@ -3,7 +3,7 @@ package ml.scenario;
 /**
  * The Class ScenarioEvent.
  */
-public class ScenarioEvent {
+public class ScenarioEvent implements Comparable<ScenarioEvent>{
 	
 	/** The time of the event. */
 	public int time;
@@ -39,6 +39,14 @@ public class ScenarioEvent {
 	 */
 	public ScenarioEvent() {
 		super();
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo(ScenarioEvent o) {
+		return this.time-o.time;
 	}
 	
 	

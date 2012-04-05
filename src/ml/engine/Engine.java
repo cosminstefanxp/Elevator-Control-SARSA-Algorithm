@@ -18,6 +18,12 @@ public class Engine {
 	/** The world. */
 	private World world;
 	
+	/** The current state. */
+	private State currentState;
+	
+	/** The previous state. */
+	private State previousState;
+	
 	/** The Constant log. */
 	private static final Logger log=Logger.getLogger(Engine.class);
 	
@@ -32,13 +38,12 @@ public class Engine {
 		log.setLevel(Level.ALL);		
 	}
 
-
 	/**
 	 * Instantiates a new engine.
 	 *
 	 * @param world the world
 	 */
-	public Engine(World world) {
+	public Engine(World world, State startState) {
 		super();
 		configureLogger();
 		
@@ -48,6 +53,8 @@ public class Engine {
 		//Initialize the elements
 		Q=new HashMap<State, Double[]>((int) (State.STATE_SPACE_SIZE));
 		this.world=world;
+		this.currentState=startState;
+		log.info("Start state: "+currentState);
 
 		log.info("Engine initialized");
 	}

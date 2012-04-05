@@ -22,8 +22,8 @@ public class State {
 	public static final int UP=0;
 	
 	/** The Constant DOWN. */
-	public static final int DOWN=0;
-	
+	public static final int DOWN=1;
+
 	/** The Constant STATE_SPACE_SIZE. */
 	public static final int STATE_SPACE_SIZE=
 			(int) (ScenarioGenerator.FLOOR_COUNT*
@@ -54,8 +54,24 @@ public class State {
 	/**  If people from elevator 2 are going to the floors above, below, current. */
 	boolean[] destinationsE2=new boolean[3];
 	
-	/** The time interval, as a number from 1-12 (2 hour intervals). */
+	/** The time interval, as a number from 0-11 (2 hour intervals). */
 	byte timeInterval;
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder outp=new StringBuilder();
+		outp.append("State [" + timeInterval);
+		outp.append(", [E1: " + elevator1Floor + " - "	+ Arrays.toString(destinationsE1));
+		outp.append("], [E2: " + elevator2Floor + " - "	+ Arrays.toString(destinationsE2));
+		outp.append("], waiting=[");
+		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
+			outp.append(Arrays.toString(waiting[i])+" ");
+		outp.append("]");
+		return outp.toString();
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
