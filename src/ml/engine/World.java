@@ -18,6 +18,13 @@ import org.apache.log4j.PatternLayout;
  */
 public class World {
 	
+	/** The Constant REWARD_TIME_LIMIT that defines the number of delay time units that are
+	 * still positively rewarded. After that, the reward gets strictly negative. */
+	//private static final int REWARD_DELAY_LIMIT=5;
+	
+	/** The Constant REWARD_PER_UNIT that defines the reward per time unit. */
+	private static final int REWARD_PER_UNIT=-1;
+	
 	/** The previous action. */
 	private int previousAction;
 	
@@ -48,6 +55,30 @@ public class World {
 	/** The Constant log. */
 	private static final Logger log=Logger.getLogger(World.class);
 	
+	/**
+	 * Configure logger.
+	 */
+	private void configureLogger()
+	{
+		PatternLayout patternLayout=new PatternLayout("%-3r [%-5p] %c - %m%n");
+		ConsoleAppender appender=new ConsoleAppender(patternLayout);
+		log.addAppender(appender);
+		log.setLevel(Level.ALL);		
+	}
+	
+	/**
+	 * Gets the delay time: TDestination − TShowUp − |StartFloor − StopFloor|
+	 *
+	 * @param ev the event
+	 * @return the delay (negative number)
+	 */
+	private int getDelay(ScenarioEvent ev, int stopTime)
+	{
+		if(ev.stopFloor>ev.startFloor)
+			return stopTime-ev.time-(ev.stopFloor-ev.startFloor);
+		else
+			return stopTime-ev.time-(ev.startFloor-ev.stopFloor);
+	}
 	
 	/**
 	 * Gets an array with the all the possible action starting from a given state.
@@ -110,17 +141,6 @@ public class World {
 	}
 	
 	/**
-	 * Configure logger.
-	 */
-	private void configureLogger()
-	{
-		PatternLayout patternLayout=new PatternLayout("%-3r [%-5p] %c - %m%n");
-		ConsoleAppender appender=new ConsoleAppender(patternLayout);
-		log.addAppender(appender);
-		log.setLevel(Level.ALL);		
-	}
-
-	/**
 	 * Instantiates a new world.
 	 */
 	public World() {
@@ -172,7 +192,7 @@ public class World {
 	public State getNextState(State currentState, int action)
 	{
 		State state=new State();
-		
+	
 		//Update people waiting
 		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
 		{
@@ -387,8 +407,27 @@ public class World {
 		prevPreviousAction=previousAction;
 		previousAction=action;				
 				
-		
 		return state;
+	}
+	
+	/**
+	 * Gets the reward for the current state. Due to memory restrictions, states cannot contain
+	 * all the information required to get the reward. So, only the reward for the current state
+	 * can be obtained.
+	 * 
+	 * @return the reward for current state
+	 */
+	public int getRewardForCurrentState()
+	{
+		int reward=0;
+		for(ScenarioEvent passenger:peopleInE1)
+			reward+=this.getDelay(passenger, this.time);
+		for(ScenarioEvent passenger:peopleInE2)
+			reward+=this.getDelay(passenger, this.time);
+		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
+			for(ScenarioEvent passenger:peopleWaiting.get(i))
+				reward+=this.getDelay(passenger, this.time);
+		return reward*REWARD_PER_UNIT;
 	}
 	
 	/**
@@ -410,6 +449,31 @@ public class World {
 			else
 				destinationsE[State.CURRENT]=true;
 	}
+	
+	/**
+	 * Checks if the scenario is finished.
+	 *
+	 * @return true, if is scenario finished
+	 */
+	public boolean isScenarioFinished()
+	{
+//		if(time==10)
+//			return true;
+		
+		if(currentEventIndex>=events.size())
+		{
+			if(this.peopleInE1.size()>0)
+				return false;
+			if(this.peopleInE2.size()>0)
+				return false;
+			for(LinkedList<ScenarioEvent> l:peopleWaiting)
+				if(l.size()>0)
+					return false;
+			
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	 * Injects the events corresponding to the current {@code time} in the world. Also, updates
@@ -420,7 +484,7 @@ public class World {
 	private void injectEventsInWorld(State state)
 	{
 		//While there are more events at the current time, inject them in the system
-		while(events.get(currentEventIndex).time==time)
+		while(currentEventIndex<events.size() && events.get(currentEventIndex).time<=time)
 		{
 			ScenarioEvent ev=events.get(currentEventIndex);
 			peopleWaiting.get(ev.startFloor).add(ev);
@@ -472,17 +536,25 @@ public class World {
 		world.events.add(2,new ScenarioEvent(3, 1, 0));
 		State startState=world.generateStartState();
 		Engine engine=new Engine(world,startState);
-		log.debug(world.getPossibleActions(startState, Action.E1_STOP+Action.E2_STOP, Action.E1_STOP+Action.E2_STOP));
-		State nextState=world.getNextState(startState, Action.E1_UP+Action.E2_STOP);
-		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_STOP);
-		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_UP);
-		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
-		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
-		log.info(nextState);		
+		
+		engine.run();
+		
+		
+//		log.debug(world.getPossibleActions(startState, Action.E1_STOP+Action.E2_STOP, Action.E1_STOP+Action.E2_STOP));
+//		State nextState=world.getNextState(startState, Action.E1_UP+Action.E2_STOP);
+//		log.info(nextState);
+//		log.info(world.getRewardForCurrentState());
+//		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_STOP);
+//		log.info(nextState);
+//		log.info(world.getRewardForCurrentState());
+//		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_UP);
+//		log.info(nextState);
+//		log.info(world.getRewardForCurrentState());
+//		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
+//		log.info(nextState);
+//		log.info(world.getRewardForCurrentState());
+//		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
+//		log.info(nextState);		
 	}
 
 
