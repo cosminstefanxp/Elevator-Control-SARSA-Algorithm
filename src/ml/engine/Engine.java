@@ -21,9 +21,6 @@ public class Engine {
 	/** The current state. */
 	private State currentState;
 	
-	/** The previous state. */
-	private State previousState;
-	
 	/** The Constant log. */
 	private static final Logger log=Logger.getLogger(Engine.class);
 	

@@ -5,30 +5,22 @@ package ml.engine;
 public class Action {
 	
 	/** First elevator is doing the action. */
-	public static final int E1_UP=0;
+	public static final int E1_DOWN=0;
 	/** First elevator is doing the action. */
-	public static final int E1_DOWN=1;
+	public static final int E1_STOP=3;
 	/** First elevator is doing the action. */
-	public static final int E1_STOP=2;
+	public static final int E1_UP=6;
 	/** Second elevator is doing the action. */
-	public static final int E2_UP=0;
+	public static final int E2_DOWN=0;
 	/** Second elevator is doing the action. */
-	public static final int E2_DOWN=3;
+	public static final int E2_STOP=1;
 	/** Second elevator is doing the action. */
-	public static final int E2_STOP=6;	
-	/** The Constant NO_ACTION. */
-	public static final int NO_ACTION=-1;
+	public static final int E2_UP=2;	
 	
-	/**
-	 * Gets the e1 action.
-	 *
-	 * @param val the val
-	 * @return the e1 action
-	 */
-	public static int getE1Action(int val)
-	{
-		return val%3;
-	}
+	/** The Constant NO_ACTION. */
+	public static final int NO_ACTION=-1;	
+	/** The Constant ACTION_COUNT. */
+	public static final int ACTION_COUNT=9;
 	
 	/**
 	 * Gets the e2 action.
@@ -37,6 +29,29 @@ public class Action {
 	 * @return the e2 action
 	 */
 	public static int getE2Action(int val)
+	{
+		return val%3;
+	}
+	
+	/**
+	 * Combines the actions.
+	 *
+	 * @param e1Action the e1 action
+	 * @param e2Action the e2 action
+	 * @return the int
+	 */
+	public static int combine(int e1Action, int  e2Action)
+	{
+		return e1Action+e2Action;
+	}
+	
+	/**
+	 * Gets the e1 action.
+	 *
+	 * @param val the val
+	 * @return the e1 action
+	 */
+	public static int getE1Action(int val)
 	{
 		return val-val%3;
 	}

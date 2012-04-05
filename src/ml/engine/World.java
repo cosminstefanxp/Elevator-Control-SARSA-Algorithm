@@ -48,6 +48,67 @@ public class World {
 	/** The Constant log. */
 	private static final Logger log=Logger.getLogger(World.class);
 	
+	
+	/**
+	 * Gets an array with the all the possible action starting from a given state.
+	 *
+	 * @param state the state
+	 * @param prevAction the previous action
+	 * @return the possible actions
+	 */
+	public ArrayList<Integer> getPossibleActions(State state, Integer previousAction, Integer prevPreviousAction)
+	{
+		ArrayList<Integer> a=new ArrayList<Integer>();
+		boolean e1up, e2up, e1down, e2down;
+		e1up=e2up=e1down=e2down=true;
+		int e1a, e2a;
+		e1a=Action.getE1Action(previousAction);
+		e2a=Action.getE1Action(previousAction);
+		
+		//If elevator just stopped -> it can't move for 2 units
+		if(e1a==Action.E1_STOP && 
+				(Action.getE1Action(prevPreviousAction)==Action.E1_UP || 
+				 Action.getE1Action(prevPreviousAction)==Action.E1_DOWN))
+			e1up=e1down=false;
+		if(e2a==Action.E2_STOP &&
+				(Action.getE2Action(prevPreviousAction)==Action.E2_UP || 
+				 Action.getE2Action(prevPreviousAction)==Action.E2_DOWN))
+			e2up=e2down=false;
+		
+		//If elevator is at top, it can't move up
+		if(state.elevator1Floor==ScenarioGenerator.MAX_FLOOR)
+			e1up=false;
+		if(state.elevator2Floor==ScenarioGenerator.MAX_FLOOR)
+			e2up=false;
+		
+		//If elevator is at bottom, it can't move up
+		if(state.elevator1Floor==ScenarioGenerator.MIN_FLOOR)
+			e1down=false;
+		if(state.elevator2Floor==ScenarioGenerator.MIN_FLOOR)
+			e2down=false;
+		
+		//Generate actions
+		if(e1up)
+		{
+			a.add(Action.combine(Action.E1_UP, Action.E2_STOP));
+			if(e2up) a.add(Action.combine(Action.E1_UP, Action.E2_UP));
+			if(e2down) a.add(Action.combine(Action.E1_UP, Action.E2_DOWN));
+		}
+		if(e1down)
+		{
+			a.add(Action.combine(Action.E1_DOWN, Action.E2_STOP));
+			if(e2up) a.add(Action.combine(Action.E1_DOWN, Action.E2_UP));
+			if(e2down) a.add(Action.combine(Action.E1_DOWN, Action.E2_DOWN));
+		}
+		//The elevator can stop at any time
+		a.add(Action.combine(Action.E1_STOP, Action.E2_STOP));
+		if(e2up) a.add(Action.combine(Action.E1_STOP, Action.E2_UP));
+		if(e2down) a.add(Action.combine(Action.E1_STOP, Action.E2_DOWN));
+	
+		
+		return a;
+	}
+	
 	/**
 	 * Configure logger.
 	 */
@@ -411,15 +472,16 @@ public class World {
 		world.events.add(2,new ScenarioEvent(3, 1, 0));
 		State startState=world.generateStartState();
 		Engine engine=new Engine(world,startState);
-		State nextState=world.getNextState(startState, Action.E2_UP+Action.E1_STOP);
+		log.debug(world.getPossibleActions(startState, Action.E1_STOP+Action.E2_STOP, Action.E1_STOP+Action.E2_STOP));
+		State nextState=world.getNextState(startState, Action.E1_UP+Action.E2_STOP);
 		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E2_STOP+Action.E1_STOP);
+		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_STOP);
 		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E2_STOP+Action.E1_UP);
+		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_UP);
 		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E2_UP+Action.E1_STOP);
+		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
 		log.info(nextState);
-		nextState=world.getNextState(nextState, Action.E2_UP+Action.E1_STOP);
+		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
 		log.info(nextState);		
 	}
 
