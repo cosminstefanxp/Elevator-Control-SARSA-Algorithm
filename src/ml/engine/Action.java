@@ -15,7 +15,7 @@ public class Action {
 	/** Second elevator is doing the action. */
 	public static final int E2_DOWN=3;
 	/** Second elevator is doing the action. */
-	public static final int E2_STOP=7;	
+	public static final int E2_STOP=6;	
 	/** The Constant NO_ACTION. */
 	public static final int NO_ACTION=-1;
 	
@@ -38,7 +38,7 @@ public class Action {
 	 */
 	public static int getE2Action(int val)
 	{
-		return val/3;
+		return val-val%3;
 	}
 	
 	

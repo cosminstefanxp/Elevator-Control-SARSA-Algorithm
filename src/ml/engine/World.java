@@ -132,12 +132,14 @@ public class World {
 		case Action.E1_UP: 		state.elevator1Floor=(byte) (currentState.elevator1Floor+1); break;
 		case Action.E1_STOP: 	state.elevator1Floor=(byte) (currentState.elevator1Floor); break;
 		case Action.E1_DOWN: 	state.elevator1Floor=(byte) (currentState.elevator1Floor-1); break;
+		default: log.fatal("Illegal action for E1: "+action);
 		}
 		switch(Action.getE2Action(action))
 		{
 		case Action.E2_UP: 		state.elevator2Floor=(byte) (currentState.elevator2Floor+1); break;
 		case Action.E2_STOP: 	state.elevator2Floor=(byte) (currentState.elevator2Floor); break;
 		case Action.E2_DOWN: 	state.elevator2Floor=(byte) (currentState.elevator2Floor-1); break;
+		default: log.fatal("Illegal action for E2: "+action);
 		}
 		
 		/** Update the people waiting, in the elevators and update the destinations in the state
@@ -404,13 +406,21 @@ public class World {
 	public static void main(String[] args)
 	{
 		World world = new World();
-		world.events.add(0,new ScenarioEvent(0, 0, 3));
+		world.events.add(0,new ScenarioEvent(0, 0, 1));
+		world.events.add(1,new ScenarioEvent(1, 1, 3));
+		world.events.add(2,new ScenarioEvent(3, 1, 0));
 		State startState=world.generateStartState();
 		Engine engine=new Engine(world,startState);
 		State nextState=world.getNextState(startState, Action.E2_UP+Action.E1_STOP);
 		log.info(nextState);
+		nextState=world.getNextState(nextState, Action.E2_STOP+Action.E1_STOP);
+		log.info(nextState);
+		nextState=world.getNextState(nextState, Action.E2_STOP+Action.E1_UP);
+		log.info(nextState);
 		nextState=world.getNextState(nextState, Action.E2_UP+Action.E1_STOP);
 		log.info(nextState);
+		nextState=world.getNextState(nextState, Action.E2_UP+Action.E1_STOP);
+		log.info(nextState);		
 	}
 
 

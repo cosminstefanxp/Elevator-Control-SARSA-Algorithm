@@ -10,19 +10,19 @@ import ml.scenario.ScenarioGenerator;
 public class State {
 	
 	/** The Constant HERE. */
-	public static final int CURRENT=0;
+	public static final int CURRENT=1;
 	
 	/** The Constant ABOVE. */
-	public static final int ABOVE=1;
+	public static final int ABOVE=2;
 	
 	/** The Constant BELOW. */
-	public static final int BELOW=2;
+	public static final int BELOW=0;
 	
 	/** The Constant UP. */
-	public static final int UP=0;
+	public static final int UP=1;
 	
 	/** The Constant DOWN. */
-	public static final int DOWN=1;
+	public static final int DOWN=0;
 
 	/** The Constant STATE_SPACE_SIZE. */
 	public static final int STATE_SPACE_SIZE=
