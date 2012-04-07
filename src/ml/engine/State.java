@@ -1,7 +1,5 @@
 package ml.engine;
 
-import java.util.Arrays;
-
 import ml.scenario.ScenarioGenerator;
 
 /**
@@ -34,10 +32,10 @@ public class State {
 					12);
 							
 	/** The elevator1's floor. */
-	byte elevator1Floor;
+	private byte elevator1Floor;
 	
 	/** The elevator2's floor. */
-	byte elevator2Floor;
+	private byte elevator2Floor;
 	
 	/** If people are waiting on the floors above, below, current -first dimension- 
 	 * and where do they want to go (UP, DOWN) - the second dimension. Relative to the
@@ -46,16 +44,201 @@ public class State {
 
 	/** If people are waiting on each of the floor (first dimension), going either
 	 * UP or DOWN (second dimension). */
-	boolean waiting[][]=new boolean[ScenarioGenerator.FLOOR_COUNT][2];
+	//private boolean waiting[][]=new boolean[ScenarioGenerator.FLOOR_COUNT][2];
 	
 	/**  If people from elevator 1 are going to the floors above, below, current. */
-	boolean[] destinationsE1=new boolean[3];
+	//private boolean[] destinationsE1=new boolean[3];
 
 	/**  If people from elevator 2 are going to the floors above, below, current. */
-	boolean[] destinationsE2=new boolean[3];
+	//private boolean[] destinationsE2=new boolean[3];
 	
 	/** The time interval, as a number from 0-11 (2 hour intervals). */
-	byte timeInterval;
+	private byte timeInterval;
+	
+	/** The Constant DEST_E1_BIT. */
+	private static final int DEST_E1_BIT=0;
+	
+	/** The Constant DEST_E2_BIT. */
+	private static final int DEST_E2_BIT=3;
+	
+	/** The Constant WAITING_BIT. */
+	private static final int WAITING_BIT=6;
+
+	/** The value. */
+	private int value=0;
+	
+	/**
+	 * Sets the bit.
+	 *
+	 * @param bit the new bit
+	 */
+	private void setBit(int bit)
+	{
+		value |= 1 << bit;
+	}
+	
+	/**
+	 * Clear bit.
+	 *
+	 * @param bit the bit
+	 */
+	private void clearBit(int bit)
+	{
+		value &= ~(1 << bit);
+	}
+	
+	/**
+	 * Gets the bit.
+	 *
+	 * @param bit the bit
+	 * @return the bit
+	 */
+	private boolean getBit(int bit)
+	{
+		return (value & (1 << bit)) != 0;
+	}
+	
+	/**
+	 * Gets the elevator1 floor.
+	 *
+	 * @return the elevator1 floor
+	 */
+	public byte getElevator1Floor() {
+		return elevator1Floor;
+	}
+
+	/**
+	 * Sets the elevator1 floor.
+	 *
+	 * @param elevator1Floor the new elevator1 floor
+	 */
+	public void setElevator1Floor(byte elevator1Floor) {
+		this.elevator1Floor = elevator1Floor;
+	}
+
+	/**
+	 * Gets the elevator2 floor.
+	 *
+	 * @return the elevator2 floor
+	 */
+	public byte getElevator2Floor() {
+		return elevator2Floor;
+	}
+
+	/**
+	 * Sets the elevator2 floor.
+	 *
+	 * @param elevator2Floor the new elevator2 floor
+	 */
+	public void setElevator2Floor(byte elevator2Floor) {
+		this.elevator2Floor = elevator2Floor;
+	}
+
+	/**
+	 * Gets the waiting info. If people are waiting on the {@code floor} for going in the {@code direction}.
+	 *
+	 * @param floor the floor
+	 * @param direction the direction
+	 * @return true, if anyone waiting
+	 */
+	public boolean getWaiting(int floor, int direction) {
+		return getBit(WAITING_BIT + floor*2+direction);
+	}
+
+	/**
+	 * Sets the waiting. If people are waiting on the {@code floor} for going in the {@code direction}.
+	 *
+	 * @param floor the floor
+	 * @param direction the direction
+	 * @param waiting the waiting
+	 */
+	public void setWaiting(int floor, int direction, boolean waiting) {
+		if(waiting)
+			setBit(WAITING_BIT + floor*2+direction);
+		else
+			clearBit(WAITING_BIT + floor*2+direction);
+	}
+
+	/**
+	 * Gets the destinations for elevator 1. If people want to go Above, Below or on the current floor.
+	 *
+	 * @param direction the direction
+	 * @return the destinations for elevator 1
+	 */
+	public boolean getDestinationsE1(int direction) {
+		return getBit(DEST_E1_BIT+direction);
+	}
+
+	/**
+	 * Sets the destination e1.
+	 *
+	 * @param direction the direction
+	 * @param destinationE1 the destination e1
+	 */
+	public void setDestinationE1(int direction, boolean destinationE1) {
+		if(destinationE1)
+			setBit(DEST_E1_BIT+direction);
+		else
+			clearBit(DEST_E1_BIT+direction);
+	}
+
+	/**
+	 * Gets the destinations for elevator 2. If people want to go Above, Below or on the current floor.
+	 *
+	 * @param direction the direction
+	 * @return the destinations for elevator 2
+	 */
+	public boolean getDestinationsE2(int direction) {
+		return getBit(DEST_E2_BIT+direction);
+	}
+
+	/**
+	 * Sets the destination for elevator 2.
+	 *
+	 * @param direction the direction
+	 * @param destinationE2 the destination e2
+	 */
+	public void setDestinationE2(int direction, boolean destinationE2) {
+		if(destinationE2)
+			setBit(DEST_E2_BIT+direction);
+		else
+			clearBit(DEST_E2_BIT+direction);
+	}
+
+	/**
+	 * Gets the time interval.
+	 *
+	 * @return the time interval
+	 */
+	public byte getTimeInterval() {
+		return timeInterval;
+	}
+
+	/**
+	 * Sets the time interval.
+	 *
+	 * @param timeInterval the new time interval
+	 */
+	public void setTimeInterval(byte timeInterval) {
+		this.timeInterval = timeInterval;
+	}
+	
+	/**
+	 * Bits to string.
+	 *
+	 * @param startBit the start bit
+	 * @param count the count
+	 * @return the string
+	 */
+	private String bitsToString(int startBit, int count)
+	{
+		String ret="[";
+		
+		for(int i=startBit;i<startBit+count;i++)
+			ret+=getBit(i)?"T ":"F ";
+		
+		return ret+"]";
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -64,11 +247,11 @@ public class State {
 	public String toString() {
 		StringBuilder outp=new StringBuilder();
 		outp.append("State [" + timeInterval);
-		outp.append(", [E1: " + elevator1Floor + " - "	+ Arrays.toString(destinationsE1));
-		outp.append("], [E2: " + elevator2Floor + " - "	+ Arrays.toString(destinationsE2));
+		outp.append(", [E1: " + elevator1Floor + " - "	+ bitsToString(DEST_E1_BIT, 3));
+		outp.append("], [E2: " + elevator2Floor + " - "	+ bitsToString(DEST_E2_BIT, 3));
 		outp.append("], waiting=[");
 		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
-			outp.append(Arrays.toString(waiting[i])+" ");
+			outp.append(bitsToString(WAITING_BIT+2*i, 2)+" ");
 		outp.append("]");
 		return outp.toString();
 	}
@@ -78,15 +261,13 @@ public class State {
 	 */
 	@Override
 	public int hashCode() {
-		final long prime = 37;
-		long result = 1;
-		result = prime * result + Arrays.hashCode(destinationsE1);
-		result = prime * result + Arrays.hashCode(destinationsE2);
+		final int prime = 31;
+		int result = 1;
 		result = prime * result + elevator1Floor;
 		result = prime * result + elevator2Floor;
 		result = prime * result + timeInterval;
-		result = prime * result + Arrays.hashCode(waiting);
-		return (int) (result%Integer.MAX_VALUE);
+		result = prime * result + value;
+		return result;
 	}
 
 	/* (non-Javadoc)
@@ -101,20 +282,26 @@ public class State {
 		if (getClass() != obj.getClass())
 			return false;
 		State other = (State) obj;
-		if (!Arrays.equals(destinationsE1, other.destinationsE1))
-			return false;
-		if (!Arrays.equals(destinationsE2, other.destinationsE2))
-			return false;
 		if (elevator1Floor != other.elevator1Floor)
 			return false;
 		if (elevator2Floor != other.elevator2Floor)
 			return false;
 		if (timeInterval != other.timeInterval)
 			return false;
-		if (!Arrays.equals(waiting, other.waiting))
+		if (value != other.value)
 			return false;
 		return true;
 	}
+
+	/**
+	 * Instantiates a new state.
+	 */
+	public State() {
+		super();
+		this.value=0;
+	}
+
+	
 
 
 	

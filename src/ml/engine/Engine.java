@@ -45,7 +45,7 @@ public class Engine {
 	private Integer prevPreviousAction;
 	
 	/** The Constant log. */
-	private static final Logger log=Logger.getLogger(Engine.class);
+	public static final Logger log=Logger.getLogger(Engine.class);
 	
 	/**
 	 * Configures the logger.
@@ -54,8 +54,9 @@ public class Engine {
 	{
 		PatternLayout patternLayout=new PatternLayout("%-3r [%-5p] %c - %m%n");
 		ConsoleAppender appender=new ConsoleAppender(patternLayout);
+		appender.setImmediateFlush(true);
 		log.addAppender(appender);
-		log.setLevel(Level.INFO);		
+		log.setLevel(Level.INFO);
 	}
 	
 	public void logStatistics()
@@ -98,7 +99,7 @@ public class Engine {
 		if(vals==null)
 			return 0;
 		else
-			return vals[action];
+			return vals[action]!=null?vals[action]:0;
 	}
 	
 	/**
@@ -115,7 +116,8 @@ public class Engine {
 		Double newQVal;
 		while(!world.isScenarioFinished())
 		{	
-			log.debug("Now in state: "+currentState);
+			time++;
+			log.debug(time+") Now in state: "+currentState+" performing "+action);
 			
 			//Perform the action and get to the new state & the reward
 			newState=world.getNextState(currentState, action);
@@ -124,15 +126,13 @@ public class Engine {
 			
 			//Choose next action
 			newAction=getNextAction(newState);
-			time++;			
-			log.debug(time+") Performing action: "+newAction);
+			log.debug("Next action: "+newAction+". Updating Q Value.");
 			
 			//Update Q
 			newQVal=getQValue(this.currentState, action);
 			newQVal+=LEARNING_FACTOR*(reward+ATTENUATION_FACTOR*getQValue(newState, newAction)-newQVal);
-			//log.fatal("Setting");
 			setQValue(this.currentState, action, newQVal);
-			//log.fatal("Setting done");
+			log.debug("Q value updated. Step finished.");
 			
 			//Update actions and state
 			this.prevPreviousAction=previousAction;
@@ -140,7 +140,7 @@ public class Engine {
 			action=newAction;
 			this.currentState=newState;
 		}
-
+		
 		
 		log.info("Engine finished");
 	}
@@ -166,9 +166,10 @@ public class Engine {
 			Double[] QVals=Q.get(state);
 			for(Integer action:possibleActions)
 			{
-				if(maxQ<QVals[action])
+				double val=QVals[action]!=null?QVals[action]:0;
+				if(maxQ<val)
 				{
-					maxQ=QVals[action];
+					maxQ=val;
 					maxAction=action;
 				}
 			}

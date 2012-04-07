@@ -30,7 +30,7 @@ public class Action {
 	 */
 	public static int getE2Action(int val)
 	{
-		return val%3;
+		return val==NO_ACTION?NO_ACTION:val%3;
 	}
 	
 	/**
@@ -53,7 +53,7 @@ public class Action {
 	 */
 	public static int getE1Action(int val)
 	{
-		return val-val%3;
+		return val==NO_ACTION?NO_ACTION:val-val%3;
 	}
 	
 	
