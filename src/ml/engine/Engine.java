@@ -17,6 +17,12 @@ public class Engine {
 	/** The Constant ACTION_EPSILON. */
 	public static final double ACTION_EPSILON=0.4;
 	
+	/** The Constant LEARNING_FACTOR. */
+	public static final double LEARNING_FACTOR=0.3;
+	
+	/** The Constant ATTENUATION_FACTOR. */
+	public static final double ATTENUATION_FACTOR=0.3;
+	
 	/** A random number generator. */
 	private static final Random rand=new Random();
 	
@@ -49,7 +55,50 @@ public class Engine {
 		PatternLayout patternLayout=new PatternLayout("%-3r [%-5p] %c - %m%n");
 		ConsoleAppender appender=new ConsoleAppender(patternLayout);
 		log.addAppender(appender);
-		log.setLevel(Level.ALL);		
+		log.setLevel(Level.INFO);		
+	}
+	
+	public void logStatistics()
+	{
+		log.info("State Space Size: "+Q.size());
+	}
+	
+	/**
+	 * Sets the Q value corresponding to a state and an action Q(s,a).
+	 *
+	 * @param state the state
+	 * @param action the action
+	 * @param val the value
+	 */
+	private void setQValue(State state, Integer action, Double val)
+	{
+		Double vals[]=Q.get(state);
+		if(vals==null)
+		{
+			Double nVals[]=new Double[Action.ACTION_COUNT];
+			nVals[action]=val;
+			Q.put(state, nVals);			
+		}
+		else
+		{
+			vals[action]=val;
+		}
+	}
+	
+	/**
+	 * Gets the Q value corresponding to a state and an action Q(s,a).
+	 *
+	 * @param state the state
+	 * @param action the action
+	 * @return the Q value
+	 */
+	private double getQValue(State state, Integer action)
+	{
+		Double vals[]=Q.get(state);
+		if(vals==null)
+			return 0;
+		else
+			return vals[action];
 	}
 	
 	/**
@@ -60,18 +109,36 @@ public class Engine {
 		log.info("Engine started");	
 		
 		State newState;
+		Integer action=getNextAction(currentState);
+		Integer newAction;
+		Double reward;
+		Double newQVal;
 		while(!world.isScenarioFinished())
-		{
-			//Next action
-			time++;
-			Integer action=getNextAction(currentState);
-			log.debug(time+") Performing action: "+action);
-			
-			//Perform the action and get to the new state
-			newState=world.getNextState(currentState, action);
-			this.currentState=newState;
+		{	
 			log.debug("Now in state: "+currentState);
+			
+			//Perform the action and get to the new state & the reward
+			newState=world.getNextState(currentState, action);
+			reward=world.getRewardForCurrentState();
 			log.debug("Reward: "+world.getRewardForCurrentState());
+			
+			//Choose next action
+			newAction=getNextAction(newState);
+			time++;			
+			log.debug(time+") Performing action: "+newAction);
+			
+			//Update Q
+			newQVal=getQValue(this.currentState, action);
+			newQVal+=LEARNING_FACTOR*(reward+ATTENUATION_FACTOR*getQValue(newState, newAction)-newQVal);
+			//log.fatal("Setting");
+			setQValue(this.currentState, action, newQVal);
+			//log.fatal("Setting done");
+			
+			//Update actions and state
+			this.prevPreviousAction=previousAction;
+			this.previousAction=action;
+			action=newAction;
+			this.currentState=newState;
 		}
 
 		
@@ -86,7 +153,7 @@ public class Engine {
 	public Integer getNextAction(State state)
 	{
 		ArrayList<Integer> possibleActions;
-		possibleActions=world.getPossibleActions(currentState, previousAction, prevPreviousAction);
+		possibleActions=world.getPossibleActions(state, previousAction, prevPreviousAction);
 		
 		//Explore - Pick a random action
 		if(!Q.containsKey(state) || rand.nextDouble()<ACTION_EPSILON)

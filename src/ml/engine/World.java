@@ -63,7 +63,7 @@ public class World {
 		PatternLayout patternLayout=new PatternLayout("%-3r [%-5p] %c - %m%n");
 		ConsoleAppender appender=new ConsoleAppender(patternLayout);
 		log.addAppender(appender);
-		log.setLevel(Level.ALL);		
+		log.setLevel(Level.INFO);		
 	}
 	
 	/**
@@ -417,7 +417,7 @@ public class World {
 	 * 
 	 * @return the reward for current state
 	 */
-	public int getRewardForCurrentState()
+	public Double getRewardForCurrentState()
 	{
 		int reward=0;
 		for(ScenarioEvent passenger:peopleInE1)
@@ -427,7 +427,7 @@ public class World {
 		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
 			for(ScenarioEvent passenger:peopleWaiting.get(i))
 				reward+=this.getDelay(passenger, this.time);
-		return reward*REWARD_PER_UNIT;
+		return (double) (reward*REWARD_PER_UNIT);
 	}
 	
 	/**
@@ -524,6 +524,24 @@ public class World {
 	}
 	
 	/**
+	 * Resets an episode.
+	 */
+	public void resetEpisode()
+	{
+		this.peopleInE1.clear();
+		this.peopleInE2.clear();
+		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
+			this.peopleWaiting.get(i).clear();
+		
+		time=-1;
+		currentEventIndex=0;
+		previousAction=Action.NO_ACTION;
+		prevPreviousAction=Action.NO_ACTION;
+		
+		log.info("World resetted.");
+	}
+	
+	/**
 	 * The main method.
 	 *
 	 * @param args the arguments
@@ -531,13 +549,16 @@ public class World {
 	public static void main(String[] args)
 	{
 		World world = new World();
-		world.events.add(0,new ScenarioEvent(0, 0, 1));
-		world.events.add(1,new ScenarioEvent(1, 1, 3));
-		world.events.add(2,new ScenarioEvent(3, 1, 0));
 		State startState=world.generateStartState();
 		Engine engine=new Engine(world,startState);
 		
-		engine.run();
+		for(int i=0;i<1000;i++)
+		{
+			log.info("Run "+i);
+			world.resetEpisode();
+			engine.run();
+			engine.logStatistics();
+		}
 		
 		
 //		log.debug(world.getPossibleActions(startState, Action.E1_STOP+Action.E2_STOP, Action.E1_STOP+Action.E2_STOP));

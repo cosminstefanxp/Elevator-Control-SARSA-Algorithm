@@ -78,15 +78,15 @@ public class State {
 	 */
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
+		final long prime = 37;
+		long result = 1;
 		result = prime * result + Arrays.hashCode(destinationsE1);
 		result = prime * result + Arrays.hashCode(destinationsE2);
 		result = prime * result + elevator1Floor;
 		result = prime * result + elevator2Floor;
 		result = prime * result + timeInterval;
 		result = prime * result + Arrays.hashCode(waiting);
-		return result;
+		return (int) (result%Integer.MAX_VALUE);
 	}
 
 	/* (non-Javadoc)
