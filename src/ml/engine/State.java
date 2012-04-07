@@ -21,6 +21,15 @@ public class State {
 	
 	/** The Constant DOWN. */
 	public static final int DOWN=0;
+	
+	/** The Constant DEST_E1_BIT for bitwise operations on {@literal value}. */
+	private static final int DEST_E1_BIT=0;
+	
+	/** The Constant DEST_E2_BIT for bitwise operations on {@literal value}. */
+	private static final int DEST_E2_BIT=3;
+	
+	/** The Constant WAITING_BIT for bitwise operations on {@literal value}. */
+	private static final int WAITING_BIT=6;
 
 	/** The Constant STATE_SPACE_SIZE. */
 	public static final int STATE_SPACE_SIZE=
@@ -42,31 +51,20 @@ public class State {
 	 * first elevator's position.  */
 	//boolean waiting[][]=new boolean[3][2];
 
-	/** If people are waiting on each of the floor (first dimension), going either
-	 * UP or DOWN (second dimension). */
-	//private boolean waiting[][]=new boolean[ScenarioGenerator.FLOOR_COUNT][2];
-	
-	/**  If people from elevator 1 are going to the floors above, below, current. */
-	//private boolean[] destinationsE1=new boolean[3];
-
-	/**  If people from elevator 2 are going to the floors above, below, current. */
-	//private boolean[] destinationsE2=new boolean[3];
+	/** Some boolean values are being stored as bits, in the following field. They can be accessed using
+	 * the constants defined: 
+	 * <ul>
+	 * <li> WAITING_BIT - If people are waiting on each of the floor (first dimension), going either
+	 * UP or DOWN (second dimension). Access: floor*2+direction</li>
+	 * <li> DEST_E1_BIT - If people from elevator 1 are going to the floors above, below, current. Access: +direction </li>
+	 * <li> DEST_E2_BIT -  If people from elevator 2 are going to the floors above, below, current. Access: +direction </li>
+	 * </ul>*/
+	private int value;
 	
 	/** The time interval, as a number from 0-11 (2 hour intervals). */
 	private byte timeInterval;
 	
-	/** The Constant DEST_E1_BIT. */
-	private static final int DEST_E1_BIT=0;
-	
-	/** The Constant DEST_E2_BIT. */
-	private static final int DEST_E2_BIT=3;
-	
-	/** The Constant WAITING_BIT. */
-	private static final int WAITING_BIT=6;
 
-	/** The value. */
-	private int value=0;
-	
 	/**
 	 * Sets the bit.
 	 *
@@ -261,7 +259,7 @@ public class State {
 	 */
 	@Override
 	public int hashCode() {
-		final int prime = 31;
+		final int prime = 61;
 		int result = 1;
 		result = prime * result + elevator1Floor;
 		result = prime * result + elevator2Floor;
@@ -278,8 +276,6 @@ public class State {
 		if (this == obj)
 			return true;
 		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
 			return false;
 		State other = (State) obj;
 		if (elevator1Floor != other.elevator1Floor)

@@ -107,7 +107,7 @@ public class Engine {
 	 */
 	public void run()
 	{
-		log.info("Engine started");	
+		//log.info("Engine started");	
 		
 		State newState;
 		Integer action=getNextAction(currentState);
@@ -117,22 +117,22 @@ public class Engine {
 		while(!world.isScenarioFinished())
 		{	
 			time++;
-			log.debug(time+") Now in state: "+currentState+" performing "+action);
+			//log.debug(time+") Now in state: "+currentState+" performing "+action);
 			
 			//Perform the action and get to the new state & the reward
 			newState=world.getNextState(currentState, action);
 			reward=world.getRewardForCurrentState();
-			log.debug("Reward: "+world.getRewardForCurrentState());
+			//log.debug("Reward: "+world.getRewardForCurrentState());
 			
 			//Choose next action
 			newAction=getNextAction(newState);
-			log.debug("Next action: "+newAction+". Updating Q Value.");
+			//log.debug("Next action: "+newAction+". Updating Q Value.");
 			
 			//Update Q
 			newQVal=getQValue(this.currentState, action);
 			newQVal+=LEARNING_FACTOR*(reward+ATTENUATION_FACTOR*getQValue(newState, newAction)-newQVal);
 			setQValue(this.currentState, action, newQVal);
-			log.debug("Q value updated. Step finished.");
+			//log.debug("Q value updated. Step finished.");
 			
 			//Update actions and state
 			this.prevPreviousAction=previousAction;
@@ -142,7 +142,7 @@ public class Engine {
 		}
 		
 		
-		log.info("Engine finished");
+		//log.info("Engine finished");
 	}
 	
 	/**

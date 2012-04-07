@@ -247,7 +247,7 @@ public class World {
 					//If the passenger's destination is current floor, get out 
 					if(ev.stopFloor==state.getElevator1Floor())
 					{
-						log.debug("Passenger from E1 reached destination: "+ev);
+						//log.debug("Passenger from E1 reached destination: "+ev);
 						//Remove from elevator
 						it.remove();
 					}
@@ -283,7 +283,7 @@ public class World {
 						//Check if the elevator is full
 						if(peopleInE1.size()>=ScenarioGenerator.ELEVATOR_CAPACITY)
 						{
-							log.debug("E1 is full");
+							//log.debug("E1 is full");
 							moreWaiting=true;
 							break;
 						}
@@ -335,7 +335,7 @@ public class World {
 					//If the passenger's destination is current floor, get out 
 					if(ev.stopFloor==state.getElevator2Floor())
 					{
-						log.debug("Passenger from E2 reached destination: "+ev);
+						//log.debug("Passenger from E2 reached destination: "+ev);
 						//Remove from elevator
 						it.remove();
 					}
@@ -373,7 +373,7 @@ public class World {
 							moreWaiting=true;
 							break;
 						}
-						log.debug("Passenger going in E2:"+ev);
+						//log.debug("Passenger going in E2:"+ev);
 						//Remove from waiting
 						it.remove();
 						//Add in elevator
@@ -557,7 +557,7 @@ public class World {
 		previousAction=Action.NO_ACTION;
 		prevPreviousAction=Action.NO_ACTION;
 		
-		log.info("World resetted.");
+		//log.info("World resetted.");
 	}
 	
 	/**
@@ -574,14 +574,15 @@ public class World {
 //		world.events.add(0,new ScenarioEvent(0, 0, 1));
 //		world.events.add(1,new ScenarioEvent(1, 1, 3));
 //		world.events.add(2,new ScenarioEvent(3, 1, 0));
-		for(int i=0;i<10000;i++)
+		for(int i=0;i<50000;i++)
 		{
-			log.info("Run "+i);
+			if(i%500==0)
+			{
+				log.info("Run "+i);
+				engine.logStatistics();
+			}
 			world.resetEpisode();
 			engine.run();
-			engine.logStatistics();
-			//if(i>1000)
-				//Engine.log.setLevel(Level.DEBUG);
 		}
 		
 		
