@@ -1,38 +1,84 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="World" name="tema2">
-    <property environment="env"/>
-    <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.6"/>
-    <property name="source" value="1.6"/>
-    <property name="jar.dir" value="lib/"/>
-    <path id="tema2.classpath">
-        <pathelement location="bin"/>
-	<fileset dir="${jar.dir}" includes="**/*.jar"/>
+<project
+    name="tema2"
+    basedir="."
+    default="build" >
+
+    <property environment="env" />
+
+    <property
+        name="debuglevel"
+        value="source,lines,vars" />
+
+    <property
+        name="target"
+        value="1.6" />
+
+    <property
+        name="source"
+        value="1.6" />
+
+    <property
+        name="jar.dir"
+        value="lib/" />
+
+    <path id="tema2.classpath" >
+
+        <pathelement location="bin" />
+
+        <fileset
+            dir="${jar.dir}"
+            includes="**/*.jar" />
     </path>
-    <target name="init">
-        <mkdir dir="bin"/>
-        <copy includeemptydirs="false" todir="bin">
-            <fileset dir="src">
-                <exclude name="**/*.java"/>
+
+    <target name="init" >
+        <mkdir dir="bin" />
+        <copy
+            includeemptydirs="false"
+            todir="bin" >
+            <fileset dir="src" >
+                <exclude name="**/*.java" />
             </fileset>
         </copy>
     </target>
-    <target name="clean">
-        <delete dir="bin"/>
+
+    <target name="clean" >
+        <delete dir="bin" />
     </target>
-    <target depends="clean" name="cleanall"/>
-    <target depends="build-subprojects,build-project" name="build"/>
-    <target name="build-subprojects"/>
-    <target depends="init" name="build-project">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
-            <src path="src"/>
-            <classpath refid="tema2.classpath"/>
+
+    <target
+        name="cleanall"
+        depends="clean" />
+    <target
+        name="build"
+        depends="build-subprojects,build-project" />
+    <target name="build-subprojects" />
+
+    <target
+        name="build-project"
+        depends="init" >
+        <echo message="${ant.project.name}: ${ant.file}" />
+        <javac
+            debug="true"
+            debuglevel="${debuglevel}"
+            destdir="bin"
+            source="${source}"
+            target="${target}" >
+
+            <src path="src" />
+            <classpath refid="tema2.classpath" />
         </javac>
     </target>
-    <target depends="build" name="World">
-        <java classname="ml.engine.World" failonerror="true" fork="yes">
-            <classpath refid="tema2.classpath"/>
+
+    <target
+        name="run"
+        depends="build" >
+        <java
+            classname="ml.engine.World"
+            failonerror="true"
+            fork="yes" >
+            <classpath refid="tema2.classpath" />
         </java>
     </target>
+
 </project>

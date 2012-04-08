@@ -56,7 +56,7 @@ public class Engine {
 		ConsoleAppender appender=new ConsoleAppender(patternLayout);
 		appender.setImmediateFlush(true);
 		log.addAppender(appender);
-		log.setLevel(Level.INFO);
+		log.setLevel(Level.DEBUG);
 	}
 	
 	public void logStatistics()

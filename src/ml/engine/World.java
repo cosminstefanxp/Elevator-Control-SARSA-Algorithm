@@ -63,7 +63,7 @@ public class World {
 		PatternLayout patternLayout=new PatternLayout("%-3r [%-5p] %c - %m%n");
 		ConsoleAppender appender=new ConsoleAppender(patternLayout);
 		log.addAppender(appender);
-		log.setLevel(Level.INFO);		
+		log.setLevel(Level.DEBUG);		
 	}
 	
 	/**
@@ -287,7 +287,7 @@ public class World {
 							moreWaiting=true;
 							break;
 						}
-						log.debug("Passenger going in E1:"+ev);
+						//log.debug("Passenger going in E1:"+ev);
 						//Remove from waiting
 						it.remove();
 						//Add in elevator
@@ -369,7 +369,7 @@ public class World {
 						//Check if the elevator is full
 						if(peopleInE2.size()>=ScenarioGenerator.ELEVATOR_CAPACITY)
 						{
-							log.debug("E2 is full");
+							//log.debug("E2 is full");
 							moreWaiting=true;
 							break;
 						}
