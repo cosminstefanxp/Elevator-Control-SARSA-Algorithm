@@ -1,7 +1,10 @@
 package ml.engine;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -26,10 +29,19 @@ public class World {
 	private static final int REWARD_PER_UNIT=-1;
 	
 	/** The Constant EPISODE_SIZE that defines the number of identical "days" in an episode. */
-	private static final int EPISODE_SIZE=500;
+	private static final int EPISODE_SIZE=2000;
 	
 	/** The Constant EPISODE_COUNT. */
-	private static final int EPISODE_COUNT=100;
+	private static final int EPISODE_COUNT=150;
+	
+	/** The Constant DAY_AVERAGE_START that defines the day moment when the average computation starts. */
+	private static final int DAY_AVERAGE_START=60*12; //12 o'clock in the middle of the day
+	
+	/** The Constant DAY_AVERAGE_END that defines the day moment when the average computation stops. */
+	private static final int DAY_AVERAGE_END=60*14;	//2 hours -> 120 time intervals.
+	
+	/** The Constant MONTH_AVERAGE_INTERVAL that defines the days that are considered for the average. */
+	private static final int MONTH_AVERAGE_INTERVAL=50;
 	
 	/** The previous action. */
 	private int previousAction;
@@ -58,6 +70,15 @@ public class World {
 	/** The time. */
 	private int time;
 	
+	/** The daily average. */
+	private double dailyAverage;
+	
+	/** The monthly average. */
+	private double[] monthlyAverage;
+	
+	/** The average output. */
+	private BufferedWriter averageOutput; 
+	
 	/** The Constant log. */
 	private static final Logger log=Logger.getLogger(World.class);
 	
@@ -73,9 +94,10 @@ public class World {
 	}
 	
 	/**
-	 * Gets the delay time: TDestination − TShowUp − |StartFloor − StopFloor|
+	 * Gets the delay time: TDestination − TShowUp − |StartFloor − StopFloor|.
 	 *
 	 * @param ev the event
+	 * @param stopTime the stop time
 	 * @return the delay (negative number)
 	 */
 	private int getDelay(ScenarioEvent ev, int stopTime)
@@ -90,7 +112,8 @@ public class World {
 	 * Gets an array with the all the possible action starting from a given state.
 	 *
 	 * @param state the state
-	 * @param prevAction the previous action
+	 * @param previousAction the previous action
+	 * @param prevPreviousAction the prev previous action
 	 * @return the possible actions
 	 */
 	public ArrayList<Integer> getPossibleActions(State state, Integer previousAction, Integer prevPreviousAction)
@@ -153,6 +176,13 @@ public class World {
 		//Config the logger
 		configureLogger();
 		
+		//Init file for average output
+		try {
+			averageOutput = new BufferedWriter(new FileWriter("out_averages"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		//Init the scenario & events
 		sg=new ScenarioGenerator();
 		time=-1;
@@ -168,6 +198,7 @@ public class World {
 		currentEventIndex=0;
 		previousAction=Action.NO_ACTION;
 		prevPreviousAction=Action.NO_ACTION;
+		this.monthlyAverage=new double[EPISODE_SIZE];
 		
 		//Logging
 		log.info("Generated scenario with "+events.size()+" events.");
@@ -197,6 +228,10 @@ public class World {
 	 */
 	public State getNextState(State currentState, int action)
 	{
+		assert(this.peopleInE1.size()<10);
+		assert(this.peopleInE2.size()<10);
+		for(LinkedList<ScenarioEvent> l:this.peopleWaiting)
+			assert(l.size()<100);
 		State state=new State();
 	
 		//Update people waiting
@@ -211,7 +246,21 @@ public class World {
 		injectEventsInWorld(state);
 		
 		//Time interval
-		state.setTimeInterval((byte) (time/60/2));
+		//state.setTimeInterval((byte) (time/60/2));
+		int hour=(time%ScenarioGenerator.DAY_DURATION)/60;
+		if(hour<=6)
+			state.setTimeInterval(0);
+		else if(hour<=10)
+			state.setTimeInterval(1);
+		else if(hour<=12)
+			state.setTimeInterval(2);
+		else if(hour<=16)
+			state.setTimeInterval(3);
+		else if(hour<=19)
+			state.setTimeInterval(4);
+		else
+			state.setTimeInterval(5);
+			
 
 		//Next elevator positions
 		switch(Action.getE1Action(action))
@@ -411,8 +460,8 @@ public class World {
 			
 		//Update actions
 		prevPreviousAction=previousAction;
-		previousAction=action;				
-				
+		previousAction=action;			
+		
 		return state;
 	}
 	
@@ -421,21 +470,87 @@ public class World {
 	 * all the information required to get the reward. So, only the reward for the current state
 	 * can be obtained.
 	 * 
+	 * Also, in this method estimates for delay are being calculated, so as to evaluate the progress
+	 * of the learning algorithm.
+	 * 
 	 * @return the reward for current state
 	 */
 	public Double getRewardForCurrentState()
 	{
-		int reward=0;
+		int delay=0;
+		int pplCount=0;
 		for(ScenarioEvent passenger:peopleInE1)
-			reward+=this.getDelay(passenger, this.time);
+			delay+=this.getDelay(passenger, this.time);
 		for(ScenarioEvent passenger:peopleInE2)
-			reward+=this.getDelay(passenger, this.time);
+			delay+=this.getDelay(passenger, this.time);
 		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
+		{
 			for(ScenarioEvent passenger:peopleWaiting.get(i))
-				reward+=this.getDelay(passenger, this.time);
-		return (double) (reward*REWARD_PER_UNIT);
+				delay+=this.getDelay(passenger, this.time);
+			pplCount+=peopleWaiting.get(i).size();
+		}
+		pplCount+=peopleInE1.size();
+		pplCount+=peopleInE2.size();
+		
+		computeAverage((double)delay/pplCount);
+		
+		return (double) (delay*REWARD_PER_UNIT);
 	}
 	
+	/**
+	 * Estimate the average delay for the day.
+	 *
+	 * @param delayAverage the average delay
+	 */
+	private void computeAverage(double delayAverage) {
+		int dailyInterval=(time%ScenarioGenerator.DAY_DURATION);
+		int day=time/ScenarioGenerator.DAY_DURATION;
+		
+		//If it's in the daily time interval used for averaging
+		if(dailyInterval>=DAY_AVERAGE_START &&
+				dailyInterval<=DAY_AVERAGE_END)
+		{
+			if(dailyInterval==DAY_AVERAGE_START)
+				dailyAverage=0;
+			
+			dailyAverage+=delayAverage;
+		
+			//If it's the daily average end, put the average in the "monthly" averages
+			//that it influences. 
+			if(dailyInterval==DAY_AVERAGE_END)
+			{
+				dailyAverage/=(DAY_AVERAGE_END-DAY_AVERAGE_START+1);
+				for(int i=0;i<MONTH_AVERAGE_INTERVAL && day+i<EPISODE_SIZE;i++)
+					monthlyAverage[i+day]+=dailyAverage;
+			}
+		}		
+	}
+	
+	/**
+	 * Log statistics regarding average delays for the episode.
+	 * The value of the average will be the average in the days in intervals like this: <br/>
+	 * 1 <- [1..1] <br/>
+	 * 2 <- [1..2] <br/>
+	 * 3 <- [1..3] <br/>
+	 * ...... <br/>
+	 * 51 <- [2..51] <br/>
+	 * 52 <- [3..52] <br/>
+	 */
+	public void logStatistics()
+	{
+		//Update monthly average
+		for(int i=0;i<MONTH_AVERAGE_INTERVAL;i++)
+			monthlyAverage[i]/=(i+1);
+		for(int i=MONTH_AVERAGE_INTERVAL;i<EPISODE_SIZE;i++)
+			monthlyAverage[i]/=MONTH_AVERAGE_INTERVAL;
+		try {
+			averageOutput.write("\n\n-----\n"+	Arrays.toString(monthlyAverage));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	/**
 	 * Update destinations array for the people in the elevator.
 	 *
@@ -560,6 +675,7 @@ public class World {
 		
 		time=-1;
 		events=sg.generateScenarioIdenticalDays(EPISODE_SIZE);
+		this.monthlyAverage=new double[EPISODE_SIZE];
 		currentEventIndex=0;
 		previousAction=Action.NO_ACTION;
 		prevPreviousAction=Action.NO_ACTION;
@@ -577,37 +693,18 @@ public class World {
 		World world = new World();
 		State startState=world.generateStartState();
 		Engine engine=new Engine(world,startState);
-		
-//		world.events.add(0,new ScenarioEvent(0, 0, 1));
-//		world.events.add(1,new ScenarioEvent(1, 1, 3));
-//		world.events.add(2,new ScenarioEvent(3, 1, 0));
+
 		for(int i=0;i<EPISODE_COUNT;i++)
 		{
 			log.info("Run "+i);
 			world.resetEpisode();
 			engine.run();
 			engine.logStatistics();
+			world.logStatistics();
 		}
 		
-		engine.writeQToFile("out_Q");
-		
-		
-//		log.debug(world.getPossibleActions(startState, Action.E1_STOP+Action.E2_STOP, Action.E1_STOP+Action.E2_STOP));
-//		
-//		State nextState=world.getNextState(startState, Action.E1_UP+Action.E2_STOP);
-//		log.info(nextState);
-//		log.info(world.getRewardForCurrentState());
-//		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_STOP);
-//		log.info(nextState);
-//		log.info(world.getRewardForCurrentState());
-//		nextState=world.getNextState(nextState, Action.E1_STOP+Action.E2_UP);
-//		log.info(nextState);
-//		log.info(world.getRewardForCurrentState());
-//		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
-//		log.info(nextState);
-//		log.info(world.getRewardForCurrentState());
-//		nextState=world.getNextState(nextState, Action.E1_UP+Action.E2_STOP);
-//		log.info(nextState);		
+		engine.writeQToFile("out_Q");		
+
 	}
 
 

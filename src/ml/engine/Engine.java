@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -31,7 +32,7 @@ public class Engine {
 	private static final Random rand=new Random();
 	
 	/** The Q. */
-	private HashMap<State,Double[]> Q;
+	private HashMap<State,double[]> Q;
 	
 	/** The world. */
 	private World world;
@@ -65,7 +66,7 @@ public class Engine {
 	
 	public void logStatistics()
 	{
-		log.info("State Space Size: "+Q.size());
+		log.info("State Space Size: "+Q.size()+"/"+State.STATE_SPACE_SIZE);
 	}
 	
 	/**
@@ -75,12 +76,12 @@ public class Engine {
 	 * @param action the action
 	 * @param val the value
 	 */
-	private void setQValue(State state, Integer action, Double val)
+	private void setQValue(State state, Integer action, double val)
 	{
-		Double vals[]=Q.get(state);
+		double vals[]=Q.get(state);
 		if(vals==null)
 		{
-			Double nVals[]=new Double[Action.ACTION_COUNT];
+			double nVals[]=new double[Action.ACTION_COUNT];
 			nVals[action]=val;
 			Q.put(state, nVals);			
 		}
@@ -99,11 +100,11 @@ public class Engine {
 	 */
 	private double getQValue(State state, Integer action)
 	{
-		Double vals[]=Q.get(state);
+		double vals[]=Q.get(state);
 		if(vals==null)
 			return 0;
 		else
-			return vals[action]!=null?vals[action]:0;
+			return vals[action];
 	}
 	
 	/**
@@ -167,10 +168,10 @@ public class Engine {
 		{
 			int maxAction=possibleActions.get(0);
 			double maxQ=-Double.MAX_VALUE;
-			Double[] QVals=Q.get(state);
+			double[] QVals=Q.get(state);
 			for(Integer action:possibleActions)
 			{
-				double val=QVals[action]!=null?QVals[action]:0;
+				double val=QVals[action];
 				if(maxQ<val)
 				{
 					maxQ=val;
@@ -196,7 +197,7 @@ public class Engine {
 		log.info("State space size: "+State.STATE_SPACE_SIZE);
 		
 		//Initialize the elements
-		Q=new HashMap<State, Double[]>(State.STATE_SPACE_SIZE);
+		Q=new HashMap<State, double[]>(State.STATE_SPACE_SIZE);
 		this.world=world;
 		this.previousAction=this.prevPreviousAction=Action.NO_ACTION;
 		this.currentState=startState;
@@ -216,16 +217,30 @@ public class Engine {
 		
 		try {
 			BufferedWriter out=new BufferedWriter(new FileWriter(filename));
-			out.write(Q.size());
-			for(Entry<State, Double[]> entry:Q.entrySet())
+			out.write(Integer.toString(Q.size())+"\n");
+			for(Entry<State, double[]> entry:Q.entrySet())
 			{
-				out.write(entry.getKey() + " - " + entry.getValue());
+				out.write(entry.getKey().flushState() + " - " + flushQValues(entry.getValue())+"\n");
 			}
 			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		log.info("Write completed.");
+	}
+	
+	/**
+	 * Flush Q values.
+	 *
+	 * @param vals the values
+	 * @return the string
+	 */
+	public static String flushQValues(double vals[])
+	{
+		StringBuilder build=new StringBuilder();
+		for(int i=0;i<Action.ACTION_COUNT;i++)
+			build.append(String.format("%.2f ", vals[i]));
+		return build.toString();
 	}
 	
 }

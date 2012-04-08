@@ -38,7 +38,7 @@ public class State {
 					Math.pow(2, 10)*
 					Math.pow(2, 3)*
 					Math.pow(2, 3)*
-					1);
+					6);
 							
 	/** The elevators' floors. In the first 4 bits, the floor for E1 is stored,
 	 * and in the next 4 bits, the floor for E2 is stored. */
@@ -52,7 +52,7 @@ public class State {
 	 * <li> DEST_E1_BIT - If people from elevator 1 are going to the floors above, below, current. Access: +direction </li>
 	 * <li> DEST_E2_BIT -  If people from elevator 2 are going to the floors above, below, current. Access: +direction </li>
 	 * </ul>*/
-	private int value;
+	private short value;
 	
 	/** The time interval, as a number from 0-11 (2 hour intervals). */
 	private byte timeInterval;
@@ -208,10 +208,10 @@ public class State {
 	/**
 	 * Sets the time interval.
 	 *
-	 * @param timeInterval the new time interval
+	 * @param i the new time interval
 	 */
-	public void setTimeInterval(byte timeInterval) {
-		this.timeInterval = 0;
+	public void setTimeInterval(int i) {
+		this.timeInterval = (byte) i;
 	}
 	
 	/**
@@ -285,6 +285,16 @@ public class State {
 	public State() {
 		super();
 		this.value=0;
+	}
+	
+	/**
+	 * Flush state. Efficient string to be written to file.
+	 *
+	 * @return the string
+	 */
+	public String flushState()
+	{
+		return this.timeInterval+" "+this.elevatorFloor+" "+this.value;
 	}
 
 	
