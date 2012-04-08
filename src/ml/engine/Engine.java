@@ -1,7 +1,11 @@
 package ml.engine;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import org.apache.log4j.ConsoleAppender;
@@ -15,10 +19,10 @@ import org.apache.log4j.PatternLayout;
 public class Engine {
 	
 	/** The Constant ACTION_EPSILON. */
-	public static final double ACTION_EPSILON=0.4;
+	public static final double ACTION_EPSILON=0.6;
 	
 	/** The Constant LEARNING_FACTOR. */
-	public static final double LEARNING_FACTOR=0.3;
+	public static final double LEARNING_FACTOR=0.6;
 	
 	/** The Constant ATTENUATION_FACTOR. */
 	public static final double ATTENUATION_FACTOR=0.3;
@@ -201,5 +205,27 @@ public class Engine {
 		log.info("Engine initialized");
 	}
 	
+	/**
+	 * Write Q to file.
+	 *
+	 * @param filename the filename
+	 */
+	public void writeQToFile(String filename)
+	{
+		log.info("Writing Q to file");
+		
+		try {
+			BufferedWriter out=new BufferedWriter(new FileWriter(filename));
+			out.write(Q.size());
+			for(Entry<State, Double[]> entry:Q.entrySet())
+			{
+				out.write(entry.getKey() + " - " + entry.getValue());
+			}
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		log.info("Write completed.");
+	}
 	
 }

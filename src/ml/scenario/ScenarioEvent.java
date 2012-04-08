@@ -49,5 +49,17 @@ public class ScenarioEvent implements Comparable<ScenarioEvent>{
 		return this.time-o.time;
 	}
 	
+	/**
+	 * Gets a copy of the event, with the time moved with baseTime units.
+	 *
+	 * @param ev the event
+	 * @param baseTime the base time
+	 * @return the copy
+	 */
+	public ScenarioEvent getCopyAt(int baseTime)
+	{
+		return new ScenarioEvent(this.time+baseTime, this.startFloor, this.stopFloor);
+	}
+	
 	
 }

@@ -25,6 +25,12 @@ public class World {
 	/** The Constant REWARD_PER_UNIT that defines the reward per time unit. */
 	private static final int REWARD_PER_UNIT=-1;
 	
+	/** The Constant EPISODE_SIZE that defines the number of identical "days" in an episode. */
+	private static final int EPISODE_SIZE=500;
+	
+	/** The Constant EPISODE_COUNT. */
+	private static final int EPISODE_COUNT=100;
+	
 	/** The previous action. */
 	private int previousAction;
 	
@@ -63,7 +69,7 @@ public class World {
 		PatternLayout patternLayout=new PatternLayout("%-3r [%-5p] %c - %m%n");
 		ConsoleAppender appender=new ConsoleAppender(patternLayout);
 		log.addAppender(appender);
-		log.setLevel(Level.DEBUG);		
+		log.setLevel(Level.INFO);		
 	}
 	
 	/**
@@ -157,8 +163,8 @@ public class World {
 		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
 			peopleWaiting.add(new LinkedList<ScenarioEvent>());		
 		
-		events=sg.generateScenarioDay(0);
-		Collections.sort(events);
+		//Generate episode 
+		events=sg.generateScenarioIdenticalDays(EPISODE_SIZE);
 		currentEventIndex=0;
 		previousAction=Action.NO_ACTION;
 		prevPreviousAction=Action.NO_ACTION;
@@ -553,11 +559,12 @@ public class World {
 			this.peopleWaiting.get(i).clear();
 		
 		time=-1;
+		events=sg.generateScenarioIdenticalDays(EPISODE_SIZE);
 		currentEventIndex=0;
 		previousAction=Action.NO_ACTION;
 		prevPreviousAction=Action.NO_ACTION;
 		
-		//log.info("World resetted.");
+		log.info("World resetted. New Episode of size: "+events.size());
 	}
 	
 	/**
@@ -574,16 +581,15 @@ public class World {
 //		world.events.add(0,new ScenarioEvent(0, 0, 1));
 //		world.events.add(1,new ScenarioEvent(1, 1, 3));
 //		world.events.add(2,new ScenarioEvent(3, 1, 0));
-		for(int i=0;i<50000;i++)
+		for(int i=0;i<EPISODE_COUNT;i++)
 		{
-			if(i%500==0)
-			{
-				log.info("Run "+i);
-				engine.logStatistics();
-			}
+			log.info("Run "+i);
 			world.resetEpisode();
 			engine.run();
+			engine.logStatistics();
 		}
+		
+		engine.writeQToFile("out_Q");
 		
 		
 //		log.debug(world.getPossibleActions(startState, Action.E1_STOP+Action.E2_STOP, Action.E1_STOP+Action.E2_STOP));

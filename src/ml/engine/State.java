@@ -38,19 +38,12 @@ public class State {
 					Math.pow(2, 10)*
 					Math.pow(2, 3)*
 					Math.pow(2, 3)*
-					12);
+					1);
 							
-	/** The elevator1's floor. */
-	private byte elevator1Floor;
+	/** The elevators' floors. In the first 4 bits, the floor for E1 is stored,
+	 * and in the next 4 bits, the floor for E2 is stored. */
+	private byte elevatorFloor;
 	
-	/** The elevator2's floor. */
-	private byte elevator2Floor;
-	
-	/** If people are waiting on the floors above, below, current -first dimension- 
-	 * and where do they want to go (UP, DOWN) - the second dimension. Relative to the
-	 * first elevator's position.  */
-	//boolean waiting[][]=new boolean[3][2];
-
 	/** Some boolean values are being stored as bits, in the following field. They can be accessed using
 	 * the constants defined: 
 	 * <ul>
@@ -101,8 +94,8 @@ public class State {
 	 *
 	 * @return the elevator1 floor
 	 */
-	public byte getElevator1Floor() {
-		return elevator1Floor;
+	public int getElevator1Floor() {
+		return elevatorFloor & 0x0f;
 	}
 
 	/**
@@ -110,8 +103,8 @@ public class State {
 	 *
 	 * @param elevator1Floor the new elevator1 floor
 	 */
-	public void setElevator1Floor(byte elevator1Floor) {
-		this.elevator1Floor = elevator1Floor;
+	public void setElevator1Floor(int elevator1Floor) {
+		this.elevatorFloor = (byte) ((this.elevatorFloor & 0xf0) + elevator1Floor);
 	}
 
 	/**
@@ -119,8 +112,8 @@ public class State {
 	 *
 	 * @return the elevator2 floor
 	 */
-	public byte getElevator2Floor() {
-		return elevator2Floor;
+	public int getElevator2Floor() {
+		return ((elevatorFloor & 0xf0)>>4);
 	}
 
 	/**
@@ -128,8 +121,8 @@ public class State {
 	 *
 	 * @param elevator2Floor the new elevator2 floor
 	 */
-	public void setElevator2Floor(byte elevator2Floor) {
-		this.elevator2Floor = elevator2Floor;
+	public void setElevator2Floor(int elevator2Floor) {
+		this.elevatorFloor = (byte) ((this.elevatorFloor & 0x0f) + (elevator2Floor<<4));
 	}
 
 	/**
@@ -218,7 +211,7 @@ public class State {
 	 * @param timeInterval the new time interval
 	 */
 	public void setTimeInterval(byte timeInterval) {
-		this.timeInterval = timeInterval;
+		this.timeInterval = 0;
 	}
 	
 	/**
@@ -245,8 +238,8 @@ public class State {
 	public String toString() {
 		StringBuilder outp=new StringBuilder();
 		outp.append("State [" + timeInterval);
-		outp.append(", [E1: " + elevator1Floor + " - "	+ bitsToString(DEST_E1_BIT, 3));
-		outp.append("], [E2: " + elevator2Floor + " - "	+ bitsToString(DEST_E2_BIT, 3));
+		outp.append(", [E1: " + getElevator1Floor() + " - "	+ bitsToString(DEST_E1_BIT, 3));
+		outp.append("], [E2: " + getElevator2Floor() + " - "	+ bitsToString(DEST_E2_BIT, 3));
 		outp.append("], waiting=[");
 		for(int i=0;i<ScenarioGenerator.FLOOR_COUNT;i++)
 			outp.append(bitsToString(WAITING_BIT+2*i, 2)+" ");
@@ -261,8 +254,7 @@ public class State {
 	public int hashCode() {
 		final int prime = 61;
 		int result = 1;
-		result = prime * result + elevator1Floor;
-		result = prime * result + elevator2Floor;
+		result = prime * result + elevatorFloor;
 		result = prime * result + timeInterval;
 		result = prime * result + value;
 		return result;
@@ -278,9 +270,7 @@ public class State {
 		if (obj == null)
 			return false;
 		State other = (State) obj;
-		if (elevator1Floor != other.elevator1Floor)
-			return false;
-		if (elevator2Floor != other.elevator2Floor)
+		if (elevatorFloor != other.elevatorFloor)
 			return false;
 		if (timeInterval != other.timeInterval)
 			return false;

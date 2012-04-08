@@ -1,6 +1,7 @@
 package ml.scenario;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -175,5 +176,24 @@ public class ScenarioGenerator {
 		return events;
 	}
 	
-
+	/**
+	 * Generate count identical scenario days. The events are sorted.
+	 *
+	 * @param count the count
+	 * @return the array list of events
+	 */
+	public ArrayList<ScenarioEvent> generateScenarioIdenticalDays(int count)
+	{
+		ArrayList<ScenarioEvent> events=new ArrayList<ScenarioEvent>();
+		ArrayList<ScenarioEvent> dayEvents=this.generateScenarioDay(0);
+		Collections.sort(dayEvents);
+		
+		for(int i=0;i<count;i++)
+		{
+			for(ScenarioEvent ev:dayEvents)
+				events.add(ev.getCopyAt(i*DAY_DURATION));				
+		}
+	
+		return events;
+	}
 }
