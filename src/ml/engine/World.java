@@ -1,6 +1,7 @@
 package ml.engine;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,6 +21,8 @@ import org.apache.log4j.PatternLayout;
  * The Class World.
  */
 public class World {
+	
+	private static int WORLD_RUN=0;
 	
 	/** The Constant REWARD_TIME_LIMIT that defines the number of delay time units that are
 	 * still positively rewarded. After that, the reward gets strictly negative. */
@@ -179,6 +182,7 @@ public class World {
 		//Init file for average output
 		try {
 			averageOutput = new BufferedWriter(new FileWriter("out_averages"));
+			new File("octave").mkdir();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -544,7 +548,11 @@ public class World {
 		for(int i=MONTH_AVERAGE_INTERVAL;i<EPISODE_SIZE;i++)
 			monthlyAverage[i]/=MONTH_AVERAGE_INTERVAL;
 		try {
-			averageOutput.write("\n\n-----\n"+	Arrays.toString(monthlyAverage));
+			BufferedWriter out=new BufferedWriter(new FileWriter("octave/average_run_"+WORLD_RUN));
+			out.write("x=[1:"+EPISODE_SIZE+"];\n");
+			out.write("y="+Arrays.toString(monthlyAverage)+";\n");
+			out.write("plot(x,y);");
+			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -679,6 +687,7 @@ public class World {
 		currentEventIndex=0;
 		previousAction=Action.NO_ACTION;
 		prevPreviousAction=Action.NO_ACTION;
+		World.WORLD_RUN++;
 		
 		log.info("World resetted. New Episode of size: "+events.size());
 	}

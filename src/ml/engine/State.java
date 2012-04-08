@@ -254,7 +254,7 @@ public class State {
 	public int hashCode() {
 		final int prime = 67;
 		int result = 1;
-//		result = prime * result + elevatorFloor;
+		result = prime * result + elevatorFloor;
 		result = prime * result + timeInterval;
 		result = prime * result + value;
 		return result;
@@ -270,7 +270,7 @@ public class State {
 		if (obj == null)
 			return false;
 		State other = (State) obj;
-//		if (elevatorFloor != other.elevatorFloor)
+		if (elevatorFloor != other.elevatorFloor)
 //			return false;
 		if (timeInterval != other.timeInterval)
 			return false;
