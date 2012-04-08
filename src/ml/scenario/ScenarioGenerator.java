@@ -1,3 +1,10 @@
+/*
+ * Stefan-Dobrin Cosmin
+ * 342C4
+ * 
+ * Invatare Automata
+ * 2012
+ */
 package ml.scenario;
 
 import java.util.ArrayList;

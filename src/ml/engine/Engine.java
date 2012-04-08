@@ -1,3 +1,10 @@
+/*
+ * Stefan-Dobrin Cosmin
+ * 342C4
+ * 
+ * Invatare Automata
+ * 2012
+ */
 package ml.engine;
 
 import java.io.BufferedWriter;
@@ -20,13 +27,18 @@ import org.apache.log4j.PatternLayout;
 public class Engine {
 	
 	/** The Constant ACTION_EPSILON. */
-	public static final double ACTION_EPSILON=0.6;
+	public static final double ACTION_EPSILON=0.9;
 	
 	/** The Constant LEARNING_FACTOR. */
-	public static final double LEARNING_FACTOR=0.6;
+	public static final double LEARNING_FACTOR=0.8;
 	
 	/** The Constant ATTENUATION_FACTOR. */
-	public static final double ATTENUATION_FACTOR=0.3;
+	public static final double ATTENUATION_FACTOR=0.4;
+	
+	/** The Constant ANNEALING_FACTOR. */
+	public static final double ANNEALING_FACTOR=0.001/1000; 
+	
+	public double ACTION_EPSILON_ANNEALED;
 	
 	/** A random number generator. */
 	private static final Random rand=new Random();
@@ -64,9 +76,12 @@ public class Engine {
 		log.setLevel(Level.DEBUG);
 	}
 	
+	/**
+	 * Log statistics.
+	 */
 	public void logStatistics()
 	{
-		log.info("State Space Size: "+Q.size()+"/"+State.STATE_SPACE_SIZE);
+		log.info("State Space Size: "+Q.size());
 	}
 	
 	/**
@@ -121,6 +136,8 @@ public class Engine {
 		Double newQVal;
 		while(!world.isScenarioFinished())
 		{	
+			if(ACTION_EPSILON_ANNEALED>ACTION_EPSILON/2)
+				ACTION_EPSILON_ANNEALED-=ACTION_EPSILON_ANNEALED*ANNEALING_FACTOR;
 			time++;
 			//log.debug(time+") Now in state: "+currentState+" performing "+action);
 			
@@ -153,6 +170,7 @@ public class Engine {
 	/**
 	 * Gets the next action. Uses epsilon-greedy.
 	 *
+	 * @param state the state
 	 * @return the next action
 	 */
 	public Integer getNextAction(State state)
@@ -161,7 +179,7 @@ public class Engine {
 		possibleActions=world.getPossibleActions(state, previousAction, prevPreviousAction);
 		
 		//Explore - Pick a random action
-		if(!Q.containsKey(state) || rand.nextDouble()<ACTION_EPSILON)
+		if(!Q.containsKey(state) || rand.nextDouble()<ACTION_EPSILON_ANNEALED)
 			return possibleActions.get(rand.nextInt(possibleActions.size()));
 		//Exploit - Get the BEST action
 		else
@@ -197,6 +215,7 @@ public class Engine {
 		log.info("State space size: "+State.STATE_SPACE_SIZE);
 		
 		//Initialize the elements
+		ACTION_EPSILON_ANNEALED=ACTION_EPSILON;
 		Q=new HashMap<State, double[]>(State.STATE_SPACE_SIZE);
 		this.world=world;
 		this.previousAction=this.prevPreviousAction=Action.NO_ACTION;

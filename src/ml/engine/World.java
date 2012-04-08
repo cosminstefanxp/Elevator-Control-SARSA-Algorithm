@@ -1,3 +1,10 @@
+/*
+ * Stefan-Dobrin Cosmin
+ * 342C4
+ * 
+ * Invatare Automata
+ * 2012
+ */
 package ml.engine;
 
 import java.io.BufferedWriter;
@@ -22,6 +29,7 @@ import org.apache.log4j.PatternLayout;
  */
 public class World {
 	
+	/** The WORL d_ run. */
 	private static int WORLD_RUN=0;
 	
 	/** The Constant REWARD_TIME_LIMIT that defines the number of delay time units that are
@@ -45,6 +53,10 @@ public class World {
 	
 	/** The Constant MONTH_AVERAGE_INTERVAL that defines the days that are considered for the average. */
 	private static final int MONTH_AVERAGE_INTERVAL=50;
+	
+	/** The Constant WAITING_THRESHOLD that defines the number of people waiting on a floor for the 
+	 * waitingMany to be enabled on the state. */
+	private static final int WAITING_THRESHOLD=3;
 	
 	/** The previous action. */
 	private int previousAction;

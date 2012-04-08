@@ -1,3 +1,10 @@
+/*
+ * Stefan-Dobrin Cosmin
+ * 342C4
+ * 
+ * Invatare Automata
+ * 2012
+ */
 package ml.engine;
 /**
  * The Enumeration Action that defines the possible actions.

@@ -1,3 +1,10 @@
+/*
+ * Stefan-Dobrin Cosmin
+ * 342C4
+ * 
+ * Invatare Automata
+ * 2012
+ */
 package ml.engine;
 
 import ml.scenario.ScenarioGenerator;
@@ -30,6 +37,9 @@ public class State {
 	
 	/** The Constant WAITING_BIT for bitwise operations on {@literal value}. */
 	private static final int WAITING_BIT=6;
+	
+	/** The Constant WMANY_BIT bitwise operations on {@literal waitingMany}. */
+	private static final int WMANY_BIT=0;
 
 	/** The Constant STATE_SPACE_SIZE. */
 	public static final int STATE_SPACE_SIZE=
@@ -57,6 +67,10 @@ public class State {
 	/** The time interval, as a number from 0-11 (2 hour intervals). */
 	private byte timeInterval;
 	
+	
+	/** BONUS - Byte in which we store a bit value which says if there are more than WAITING_THRESHOLD people
+	 * waiting in front of the elevator. Same structure as value above, but with the constant WMANY_BIT */
+	//private short waitingMany;
 
 	/**
 	 * Sets the bit.
@@ -125,6 +139,36 @@ public class State {
 		this.elevatorFloor = (byte) ((this.elevatorFloor & 0x0f) + (elevator2Floor<<4));
 	}
 
+	
+	/**
+	 * Gets the waiting many info. If more than WAITING_THRESHOLD people are waiting on the 
+	 * {@code floor} for going in the {@code direction}.
+	 *
+	 * @param floor the floor
+	 * @param direction the direction
+	 * @return true, if anyone waiting
+	 */
+	public boolean getWaitingMany(int floor, int direction) {
+		return getBit(WMANY_BIT + floor*2+direction);
+	}
+
+	/**
+	 * Sets the many waiting. If more than WAITING_THRESHOLD people are waiting on the 
+	 * {@code floor} for going in the {@code direction}.
+	 * @param floor the floor
+	 * @param direction the direction
+	 * @param waiting the waiting
+	 */
+	public void setWaitingMany(int floor, int direction, boolean waiting) {
+		if(waiting)
+			setBit(WMANY_BIT + floor*2+direction);
+		else
+			clearBit(WMANY_BIT + floor*2+direction);
+	}
+
+	
+	
+	
 	/**
 	 * Gets the waiting info. If people are waiting on the {@code floor} for going in the {@code direction}.
 	 *
@@ -257,6 +301,7 @@ public class State {
 		result = prime * result + elevatorFloor;
 		result = prime * result + timeInterval;
 		result = prime * result + value;
+		//result = prime * result + waitingMany;
 		return result;
 	}
 
@@ -271,11 +316,13 @@ public class State {
 			return false;
 		State other = (State) obj;
 		if (elevatorFloor != other.elevatorFloor)
-//			return false;
+			return false;
 		if (timeInterval != other.timeInterval)
 			return false;
 		if (value != other.value)
 			return false;
+//		if (waitingMany != other.waitingMany)
+//			return false;
 		return true;
 	}
 
