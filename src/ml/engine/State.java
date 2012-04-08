@@ -252,9 +252,9 @@ public class State {
 	 */
 	@Override
 	public int hashCode() {
-		final int prime = 61;
+		final int prime = 67;
 		int result = 1;
-		result = prime * result + elevatorFloor;
+//		result = prime * result + elevatorFloor;
 		result = prime * result + timeInterval;
 		result = prime * result + value;
 		return result;
@@ -270,8 +270,8 @@ public class State {
 		if (obj == null)
 			return false;
 		State other = (State) obj;
-		if (elevatorFloor != other.elevatorFloor)
-			return false;
+//		if (elevatorFloor != other.elevatorFloor)
+//			return false;
 		if (timeInterval != other.timeInterval)
 			return false;
 		if (value != other.value)
